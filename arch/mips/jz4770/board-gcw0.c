@@ -8,6 +8,10 @@
  * GCW Zero specific changes:
  * Copyright (C) 2012, Maarten ter Huurne <maarten@treewalker.org>
  *
+ *
+ * PocketGo 2/Play Go v2 specific changes:
+ * 2019-2020, Marcelino Casado Clemente <ninohfox@gmail.com>
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
@@ -35,7 +39,7 @@
 #include <asm/reboot.h>
 
 #include <linux/mmc/host.h>
-#include <linux/act8600_power.h>
+//#include <linux/act8600_power.h>
 #include <linux/platform_data/jz4770_fb.h>
 #include <linux/platform_data/linkdev.h>
 #include <linux/platform_data/mxc6225.h>
@@ -399,7 +403,7 @@ static struct platform_device gcw0_usb_charger_device = {
 
 
 /* USB 1.1 Host (OHCI) */
-
+/*
 static struct regulator_consumer_supply gcw0_internal_usb_regulator_consumer =
 	REGULATOR_SUPPLY("vrfkill", "rfkill-regulator.0");
 
@@ -429,7 +433,7 @@ static struct platform_device gcw0_internal_usb_regulator_device = {
 		.platform_data = &gcw0_internal_usb_regulator_data,
 	}
 };
-
+*/
 
 /* USB OTG (musb) */
 
@@ -625,18 +629,18 @@ static struct platform_device gcw0_led_device = {
 	},
 };
 
-static struct rfkill_regulator_platform_data gcw0_rfkill_pdata = {
-	.name = "gcw0-wifi",
-	.type = RFKILL_TYPE_WLAN,
-};
-
-static struct platform_device gcw0_rfkill_device = {
-	.name = "rfkill-regulator",
-	.id = 0,
-	.dev = {
-		.platform_data = &gcw0_rfkill_pdata,
-	},
-};
+//static struct rfkill_regulator_platform_data gcw0_rfkill_pdata = {
+//	.name = "gcw0-wifi",
+//	.type = RFKILL_TYPE_WLAN,
+//};
+//
+//static struct platform_device gcw0_rfkill_device = {
+//	.name = "rfkill-regulator",
+//	.id = 0,
+//	.dev = {
+//		.platform_data = &gcw0_rfkill_pdata,
+//	},
+//};
 
 static const char * gcw0_joystick_gpiokeys_whitelist[] = {
 	"evdev",
@@ -817,7 +821,7 @@ static struct platform_device gcw0_haptic_device = {
 /* Device registration */
 
 static struct platform_device *jz_platform_devices[] __initdata = {
-	&gcw0_internal_usb_regulator_device,
+	//&gcw0_internal_usb_regulator_device,
 	&jz4770_usb_ohci_device,
 	&jz4770_usb_otg_xceiv_device,
 	&jz4770_usb_otg_device,
@@ -851,7 +855,7 @@ static struct platform_device *jz_platform_devices[] __initdata = {
 	//&gcw0_dc_charger_device,
 	&gcw0_usb_charger_device,
 	&jz4770_vpu_device,
-	&gcw0_rfkill_device,
+	//&gcw0_rfkill_device,
 	&gcw0_joystick_device,
 	&jz4770_wdt_device,
 	&gcw0_haptic_device,
@@ -918,8 +922,8 @@ static struct pinctrl_map pin_map[] __initdata = {
 	/* pwm4: rumble motor */
 	PIN_MAP_MUX_GROUP("pwm-haptic", PINCTRL_STATE_DEFAULT,
 			  "jz4770-pinctrl", NULL, "pwm4"),
-	PIN_MAP_MUX_GROUP("musb-jz.0", PINCTRL_STATE_DEFAULT,
-			  "jz4770-pinctrl", NULL, "otg"),
+//	PIN_MAP_MUX_GROUP("musb-jz.0", PINCTRL_STATE_DEFAULT,
+//			  "jz4770-pinctrl", NULL, "otg"),
 	PIN_MAP_MUX_GROUP("jz-lcd.0", PINCTRL_STATE_DEFAULT,
 			  "jz4770-pinctrl", "lcd_rgb888", "lcd"),
 	PIN_MAP_MUX_GROUP("jz-lcd.0", PINCTRL_STATE_SLEEP,
