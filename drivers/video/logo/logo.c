@@ -109,7 +109,7 @@ const struct linux_logo * __init_refok fb_find_logo(int depth)
 		logo = &logo_pg2_clut224;
 #endif
 #ifdef CONFIG_LOGO_PG2V2_CLUT224
-		/* PG2 / OpenDingux logo */
+		/* PG2V2 / OpenDingux logo */
 		logo = &logo_pg2v2_clut224;
 #endif
 #ifdef CONFIG_LOGO_RG350_CLUT224
