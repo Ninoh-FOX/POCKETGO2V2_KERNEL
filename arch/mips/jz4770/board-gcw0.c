@@ -350,12 +350,12 @@ static struct rda5807_platform_data gcw0_rda5807_pdata = {
 
 static struct jz_battery_platform_data gcw0_battery_pdata = {
 	.gpio_charge = -1,
-	//.gpio_charge_active_low = 0,
+	.gpio_charge_active_low = 0,
 	.info = {
 		.name = "battery",
 		.technology = POWER_SUPPLY_TECHNOLOGY_LIPO,
 		.voltage_max_design = 3900000,
-		.voltage_min_design = 3000000,
+		.voltage_min_design = 3300000,
 	},
 };
 
@@ -470,12 +470,12 @@ static struct i2c_board_info gcw0_i2c0_devs[] __initdata = {
 
 /* We don't have a use for the INT pin yet. */
 #define GPIO_MXC6225_INT	JZ_GPIO_PORTF(13)
-// static struct i2c_board_info gcw0_i2c1_devs[] __initdata = {
-	// {
-		// .type		= "mxc6225",
-		// .addr		= MXC6225_I2C_ADDR,
-	// },
-// };
+ static struct i2c_board_info gcw0_i2c1_devs[] __initdata = {
+	 {
+		 .type		= "mxc6225",
+		 .addr		= MXC6225_I2C_ADDR,
+	 },
+ };
 
 // static struct i2c_board_info gcw0_i2c3_devs[] __initdata = {
 	// {
@@ -499,7 +499,7 @@ static struct i2c_jz4770_platform_data gcw0_i2c1_platform_data __initdata = {
 	.use_dma		= false,
 };
 
-#if I2C0_USE_HW == 0
+#if I2C0_USE_HW == 9
 
 static struct i2c_gpio_platform_data gcw0_i2c0_gpio_data = {
 	.sda_pin		= JZ_GPIO_PORTD(30),
@@ -835,7 +835,7 @@ static struct platform_device *jz_platform_devices[] __initdata = {
 #if I2C1_USE_HW == 1
 	&jz4770_i2c1_device,
 #endif
-#if I2C0_USE_HW == 0
+#if I2C0_USE_HW == 9
 	&gcw0_i2c0_gpio_device,
 #endif
 #if I2C1_USE_HW == 0
@@ -883,7 +883,7 @@ static void __init board_i2c_init(void)
 	jz4770_i2c1_device.dev.platform_data = &gcw0_i2c1_platform_data;
 
 	i2c_register_board_info(0, gcw0_i2c0_devs, ARRAY_SIZE(gcw0_i2c0_devs));
-	//i2c_register_board_info(1, gcw0_i2c1_devs, ARRAY_SIZE(gcw0_i2c1_devs));
+	i2c_register_board_info(1, gcw0_i2c1_devs, ARRAY_SIZE(gcw0_i2c1_devs));
 	//i2c_register_board_info(3, gcw0_i2c3_devs, ARRAY_SIZE(gcw0_i2c3_devs));
 	i2c_register_board_info(4, gcw0_i2c4_devs, ARRAY_SIZE(gcw0_i2c4_devs));
 }
@@ -900,7 +900,7 @@ static void __init board_gpio_setup(void)
 	jz_gpio_disable_pullup(GPIO_USB_CHARGER);
 
 	/* MXC6225 data sheet says INT should not be pulled up or down */
-	// jz_gpio_disable_pullup(GPIO_MXC6225_INT);
+	jz_gpio_disable_pullup(GPIO_MXC6225_INT);
 }
 
 static struct pinctrl_map pin_map[] __initdata = {
