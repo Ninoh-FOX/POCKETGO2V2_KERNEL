@@ -39,7 +39,7 @@
 #include <asm/reboot.h>
 
 #include <linux/mmc/host.h>
-#include <linux/act8600_power.h>
+//#include <linux/act8600_power.h>
 #include <linux/platform_data/jz4770_fb.h>
 #include <linux/platform_data/linkdev.h>
 //#include <linux/platform_data/mxc6225.h>
@@ -332,18 +332,18 @@ static struct jz_mmc_platform_data gcw_external_sd_data = {
 
 /* Power Management Unit */
 
-static struct act8600_outputs_t act8600_outputs[] = {
+//static struct act8600_outputs_t act8600_outputs[] = {
 	 //{ 4, 0x57, true  }, /* USB OTG: 5.3V */
-	 { 5, 0x31, true  }, /* AVD:     2.5V */
+	 //{ 5, 0x31, true  }, /* AVD:     2.5V */
 	 //{ 6, 0x39, false }, /* LCD:     3.3V */
-	 { 7, 0x39, true  }, /* generic: 3.3V */
-	 { 8, 0x24, true  }, /* generic: 1.8V */
-};
+	 //{ 7, 0x39, true  }, /* generic: 3.3V */
+	 //{ 8, 0x24, true  }, /* generic: 1.8V */
+//};
 
-static struct act8600_platform_pdata_t act8600_platform_pdata = {
-         .outputs = act8600_outputs,
-         .nr_outputs = ARRAY_SIZE(act8600_outputs),
-};
+//static struct act8600_platform_pdata_t act8600_platform_pdata = {
+//         .outputs = act8600_outputs,
+//         .nr_outputs = ARRAY_SIZE(act8600_outputs),
+//};
 
 
 /* Battery */
@@ -403,7 +403,7 @@ static struct platform_device gcw0_usb_charger_device = {
 
 
 /* USB 1.1 Host (OHCI) */
-
+/*
 static struct regulator_consumer_supply gcw0_internal_usb_regulator_consumer =
 	REGULATOR_SUPPLY("vrfkill", "rfkill-regulator.0");
 
@@ -433,7 +433,7 @@ static struct platform_device gcw0_internal_usb_regulator_device = {
 		.platform_data = &gcw0_internal_usb_regulator_data,
 	}
 };
-
+*/
 
 /* USB OTG (musb) */
 
@@ -480,11 +480,12 @@ static struct i2c_board_info gcw0_i2c1_devs[] __initdata = {
 };
 
 static struct i2c_board_info gcw0_i2c3_devs[] __initdata = {
-	 {
-		 .type		= ACT8600_NAME,
-		 .addr		= ACT8600_I2C_ADDR,
-		 .platform_data	= &act8600_platform_pdata,
-	 },
+/* the RG and PG2v2 has cpu warning with this driver, is on this bus */
+//	 {
+//		 .type		= ACT8600_NAME,
+//		 .addr		= ACT8600_I2C_ADDR,
+//		 .platform_data	= &act8600_platform_pdata,
+//	 },
 };
 
 static struct i2c_board_info gcw0_i2c4_devs[] __initdata = {
@@ -824,7 +825,7 @@ static struct platform_device gcw0_haptic_device = {
 /* Device registration */
 
 static struct platform_device *jz_platform_devices[] __initdata = {
-	&gcw0_internal_usb_regulator_device,
+//	&gcw0_internal_usb_regulator_device,
 	&jz4770_usb_ohci_device,
 	&jz4770_usb_otg_xceiv_device,
 	&jz4770_usb_otg_device,
@@ -855,10 +856,10 @@ static struct platform_device *jz_platform_devices[] __initdata = {
 	&jz4770_msc0_device,
 	&jz4770_msc1_device,
 	&gcw0_led_device,
-	//&gcw0_dc_charger_device,
+//	&gcw0_dc_charger_device,
 	&gcw0_usb_charger_device,
 	&jz4770_vpu_device,
-	//&gcw0_rfkill_device,
+//	&gcw0_rfkill_device,
 	&gcw0_joystick_device,
 	&jz4770_wdt_device,
 	&gcw0_haptic_device,
