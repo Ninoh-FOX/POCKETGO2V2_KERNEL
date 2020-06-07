@@ -403,7 +403,7 @@ static struct platform_device gcw0_usb_charger_device = {
 
 
 /* USB 1.1 Host (OHCI) */
-/*
+
 static struct regulator_consumer_supply gcw0_internal_usb_regulator_consumer =
 	REGULATOR_SUPPLY("vrfkill", "rfkill-regulator.0");
 
@@ -433,7 +433,7 @@ static struct platform_device gcw0_internal_usb_regulator_device = {
 		.platform_data = &gcw0_internal_usb_regulator_data,
 	}
 };
-*/
+
 
 /* USB OTG (musb) */
 
@@ -825,7 +825,7 @@ static struct platform_device gcw0_haptic_device = {
 /* Device registration */
 
 static struct platform_device *jz_platform_devices[] __initdata = {
-//	&gcw0_internal_usb_regulator_device,
+	&gcw0_internal_usb_regulator_device,
 	&jz4770_usb_ohci_device,
 	&jz4770_usb_otg_xceiv_device,
 	&jz4770_usb_otg_device,
