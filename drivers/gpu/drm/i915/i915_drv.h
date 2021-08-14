@@ -296,6 +296,7 @@ struct drm_i915_error_state {
 	u64 fence[I915_MAX_NUM_FENCES];
 	struct timeval time;
 	struct drm_i915_error_ring {
+		bool valid;
 		struct drm_i915_error_object {
 			int page_count;
 			u32 gtt_offset;
@@ -816,6 +817,7 @@ struct i915_suspend_saved_registers {
 	u32 savePIPEB_LINK_N1;
 	u32 saveMCHBAR_RENDER_STANDBY;
 	u32 savePCH_PORT_HOTPLUG;
+	u16 saveGCDGMBUS;
 };
 
 struct intel_gen6_power_mgmt {
