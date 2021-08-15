@@ -23,7 +23,6 @@
  * Cmdstream submission:
  */
 
-#define BO_INVALID_FLAGS ~(MSM_SUBMIT_BO_READ | MSM_SUBMIT_BO_WRITE)
 /* make sure these don't conflict w/ MSM_SUBMIT_BO_x */
 #define BO_VALID    0x8000
 #define BO_LOCKED   0x4000
@@ -56,14 +55,6 @@ static struct msm_gem_submit *submit_create(struct drm_device *dev,
 	return submit;
 }
 
-static inline unsigned long __must_check
-copy_from_user_inatomic(void *to, const void __user *from, unsigned long n)
-{
-	if (access_ok(VERIFY_READ, from, n))
-		return __copy_from_user_inatomic(to, from, n);
-	return -EFAULT;
-}
-
 static int submit_lookup_objects(struct msm_gem_submit *submit,
 		struct drm_msm_gem_submit *args, struct drm_file *file)
 {
@@ -71,7 +62,6 @@ static int submit_lookup_objects(struct msm_gem_submit *submit,
 	int ret = 0;
 
 	spin_lock(&file->table_lock);
-	pagefault_disable();
 
 	for (i = 0; i < args->nr_bos; i++) {
 		struct drm_msm_gem_submit_bo submit_bo;
@@ -80,18 +70,13 @@ static int submit_lookup_objects(struct msm_gem_submit *submit,
 		void __user *userptr =
 			to_user_ptr(args->bos + (i * sizeof(submit_bo)));
 
-		ret = copy_from_user_inatomic(&submit_bo, userptr, sizeof(submit_bo));
-		if (unlikely(ret)) {
-			pagefault_enable();
-			spin_unlock(&file->table_lock);
-			ret = copy_from_user(&submit_bo, userptr, sizeof(submit_bo));
-			if (ret)
-				goto out;
-			spin_lock(&file->table_lock);
-			pagefault_disable();
+		ret = copy_from_user(&submit_bo, userptr, sizeof(submit_bo));
+		if (ret) {
+			ret = -EFAULT;
+			goto out_unlock;
 		}
 
-		if (submit_bo.flags & BO_INVALID_FLAGS) {
+		if (submit_bo.flags & ~MSM_SUBMIT_BO_FLAGS) {
 			DRM_ERROR("invalid flags: %x\n", submit_bo.flags);
 			ret = -EINVAL;
 			goto out_unlock;
@@ -128,11 +113,8 @@ static int submit_lookup_objects(struct msm_gem_submit *submit,
 	}
 
 out_unlock:
-	pagefault_enable();
-	spin_unlock(&file->table_lock);
-
-out:
 	submit->nr_bos = i;
+	spin_unlock(&file->table_lock);
 
 	return ret;
 }
@@ -180,7 +162,7 @@ retry:
 
 
 		/* if locking succeeded, pin bo: */
-		ret = msm_gem_get_iova(&msm_obj->base,
+		ret = msm_gem_get_iova_locked(&msm_obj->base,
 				submit->gpu->id, &iova);
 
 		/* this would break the logic in the fail path.. there is no
@@ -264,7 +246,7 @@ static int submit_reloc(struct msm_gem_submit *submit, struct msm_gem_object *ob
 	/* For now, just map the entire thing.  Eventually we probably
 	 * to do it page-by-page, w/ kmap() if not vmap()d..
 	 */
-	ptr = msm_gem_vaddr(&obj->base);
+	ptr = msm_gem_vaddr_locked(&obj->base);
 
 	if (IS_ERR(ptr)) {
 		ret = PTR_ERR(ptr);
@@ -324,17 +306,14 @@ static void submit_cleanup(struct msm_gem_submit *submit, bool fail)
 {
 	unsigned i;
 
-	mutex_lock(&submit->dev->struct_mutex);
 	for (i = 0; i < submit->nr_bos; i++) {
 		struct msm_gem_object *msm_obj = submit->bos[i].obj;
 		submit_unlock_unpin_bo(submit, i);
 		list_del_init(&msm_obj->submit_entry);
 		drm_gem_object_unreference(&msm_obj->base);
 	}
-	mutex_unlock(&submit->dev->struct_mutex);
 
 	ww_acquire_fini(&submit->ticket);
-	kfree(submit);
 }
 
 int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
@@ -358,6 +337,8 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 
 	if (args->nr_cmds > MAX_CMDS)
 		return -EINVAL;
+
+	mutex_lock(&dev->struct_mutex);
 
 	submit = submit_create(dev, gpu, args->nr_bos);
 	if (!submit) {
@@ -386,6 +367,18 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 			goto out;
 		}
 
+		/* validate input from userspace: */
+		switch (submit_cmd.type) {
+		case MSM_SUBMIT_CMD_BUF:
+		case MSM_SUBMIT_CMD_IB_TARGET_BUF:
+		case MSM_SUBMIT_CMD_CTX_RESTORE_BUF:
+			break;
+		default:
+			DRM_ERROR("invalid type: %08x\n", submit_cmd.type);
+			ret = -EINVAL;
+			goto out;
+		}
+
 		ret = submit_bo(submit, submit_cmd.submit_idx,
 				&msm_obj, &iova, NULL);
 		if (ret)
@@ -408,6 +401,7 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 		submit->cmd[i].type = submit_cmd.type;
 		submit->cmd[i].size = submit_cmd.size / 4;
 		submit->cmd[i].iova = iova + submit_cmd.submit_offset;
+		submit->cmd[i].idx  = submit_cmd.submit_idx;
 
 		if (submit->valid)
 			continue;
@@ -427,5 +421,6 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 out:
 	if (submit)
 		submit_cleanup(submit, !!ret);
+	mutex_unlock(&dev->struct_mutex);
 	return ret;
 }

@@ -45,7 +45,7 @@ void uvd_v2_2_fence_emit(struct radeon_device *rdev,
 	radeon_ring_write(ring, PACKET0(UVD_CONTEXT_ID, 0));
 	radeon_ring_write(ring, fence->seq);
 	radeon_ring_write(ring, PACKET0(UVD_GPCOM_VCPU_DATA0, 0));
-	radeon_ring_write(ring, addr & 0xffffffff);
+	radeon_ring_write(ring, lower_32_bits(addr));
 	radeon_ring_write(ring, PACKET0(UVD_GPCOM_VCPU_DATA1, 0));
 	radeon_ring_write(ring, upper_32_bits(addr) & 0xff);
 	radeon_ring_write(ring, PACKET0(UVD_GPCOM_VCPU_CMD, 0));
@@ -57,7 +57,6 @@ void uvd_v2_2_fence_emit(struct radeon_device *rdev,
 	radeon_ring_write(ring, 0);
 	radeon_ring_write(ring, PACKET0(UVD_GPCOM_VCPU_CMD, 0));
 	radeon_ring_write(ring, 2);
-	return;
 }
 
 /**
@@ -70,7 +69,7 @@ void uvd_v2_2_fence_emit(struct radeon_device *rdev,
  *
  * Emit a semaphore command (either wait or signal) to the UVD ring.
  */
-void uvd_v2_2_semaphore_emit(struct radeon_device *rdev,
+bool uvd_v2_2_semaphore_emit(struct radeon_device *rdev,
 			     struct radeon_ring *ring,
 			     struct radeon_semaphore *semaphore,
 			     bool emit_wait)
@@ -85,6 +84,8 @@ void uvd_v2_2_semaphore_emit(struct radeon_device *rdev,
 
 	radeon_ring_write(ring, PACKET0(UVD_SEMA_CMD, 0));
 	radeon_ring_write(ring, emit_wait ? 1 : 0);
+
+	return true;
 }
 
 /**
@@ -99,6 +100,10 @@ int uvd_v2_2_resume(struct radeon_device *rdev)
 	uint64_t addr;
 	uint32_t chip_id, size;
 	int r;
+
+	/* RV770 uses V1.0 MC */
+	if (rdev->family == CHIP_RV770)
+		return uvd_v1_0_resume(rdev);
 
 	r = radeon_uvd_resume(rdev);
 	if (r)
